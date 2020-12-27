@@ -24,6 +24,14 @@ struct Topic {
   int subCount;
 };
 
+
+void dodaj(int sd,fd_set *rmask)
+{
+FD_SET(sd, rmask);
+FD_SET(6, rmask);
+}
+
+
 int main(int argc,char* argv[])
 {
     struct User users[1024];
@@ -62,7 +70,24 @@ int main(int argc,char* argv[])
     topicCount++;
     }
     fclose(fp);
+
+
+    printf("\n\n");
+    fd_set rmask;
+    FD_ZERO(&rmask);
+    FD_SET(4, &rmask);
+ 
+    dodaj(5,&rmask);
+    for(int i=0;i<7;i++)
+	{
+		if(FD_ISSET(i,&rmask))
+		{printf("%d, ",i);
+		}
+	}	
+
     return EXIT_SUCCESS;
 }
+
+
 
 

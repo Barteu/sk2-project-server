@@ -20,6 +20,8 @@ struct User{
   char password[20];
   char nickname[20];
   int id;
+  char state; // 'l' - zalogowany 'n' - niezalogowany 'x' - usuniety
+  int cfd;
 };
 
 struct Topic {
