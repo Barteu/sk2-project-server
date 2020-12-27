@@ -12,6 +12,7 @@ void initUsers(int *userCount,struct User *users)
     {
     printf("Odczytano: %s %s %s\n",   users[*userCount].login, users[*userCount].password, users[*userCount].nickname); 
     users[*userCount].id=(*userCount);
+    users[*userCount].state='n';
     (*userCount)++;
     }   
      

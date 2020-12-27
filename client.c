@@ -36,7 +36,8 @@ int main(int argc,char* argv[])
     int opcja=0;
     while(loop)
     {
-	printf("1-poprawnie zaloguj 2-niepoprawnie \n 3-odbierz topicsy 0-exit");    
+	printf("1-poprawnie zaloguj 2-niepoprawnie \n 3-odbierz topicsy 4-logOut \n0-exit\n"); 
+	memset(buffer, 0, 1024);   
 	scanf("%d",&opcja);
 	switch(opcja)
 	{
@@ -46,7 +47,8 @@ int main(int argc,char* argv[])
          write(1,"wyslano log\n",12);
 
          rc = read(fd,buffer,1024);
-         write(1,buffer,rc);			
+         write(1,buffer,rc);	
+	 printf("\n\n");			
 	break;
 	
 	case 2:
@@ -55,10 +57,17 @@ int main(int argc,char* argv[])
 
          rc = read(fd,buffer,1024);
          write(1,buffer,rc);	
+	 printf("\n\n");	
 	break;
 
 	case 3:
-	;
+	write(fd,"t",2);
+	rc = read(fd,buffer,1024);
+	write(1,buffer,rc);
+	printf("\n\n");
+	break;
+	case 4:
+	write(fd,"o",2);
 	break;
 	case 0:
 	default:
