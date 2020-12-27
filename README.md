@@ -1,8 +1,9 @@
 # sk2-project
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-x   kompilacja skryptem:    x
-x       ./skrypt.sh         x
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+   kompilacja skryptem: 
+   
+      ./skrypt.sh         
+
 pliki:
 
 server.c - glowny plik servera
