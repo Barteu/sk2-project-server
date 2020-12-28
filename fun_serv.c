@@ -105,16 +105,111 @@ int existsCfd(struct User *users,int cfd,int userCount)
 	return 0;
 }
 
+int userIdByCfd(struct User *users,int cfd,int userCount)
+{
+	for(int i=0;i<userCount;i++)
+	{
+	 if(users[i].cfd==cfd)
+		{
+		return users[i].id;
+		}
+	}
+	return -1;
+}
+
+int isSubscriber(struct Topic topic,int id)
+{
+  for(int i=0;i<topic.subCount;i++)
+	{
+	if(id==topic.subscribers[i])
+		{
+		return 1;
+		}
+	}
+  return 0;
+}
+
 void sendTopicList(int cfd,struct Topic *topics,int topicCount)
 {
  	char buffer[2048]="\0";
+	char bufferID[4]="\0";
  	for(int i=0;i<topicCount;i++)
 	{
 	strcat(buffer,topics[i].name);
 	strcat(buffer,";");
+	snprintf(bufferID,4,"%d",topics[i].id);
+	strcat(buffer,bufferID);
+	strcat(buffer,";");
 	}
  	write(cfd,buffer,strlen(buffer));
 }
+
+
+
+void sendMyTopicList(int cfd,struct Topic *topics,int topicCount,struct User *users,int userCount)
+{
+	char buffer[2048]="\0";
+	char bufferID[4]="\0";
+	int id = userIdByCfd(users,cfd,userCount);
+ 	for(int i=0;i<topicCount;i++)
+	{
+	if(isSubscriber(topics[i],id))
+		{
+		strcat(buffer,topics[i].name);
+		strcat(buffer,";");
+		snprintf(bufferID,4,"%d",topics[i].id);
+		strcat(buffer,bufferID);
+		strcat(buffer,";");
+		}
+	}
+	if(strlen(buffer)>0)
+	{
+	write(cfd,buffer,strlen(buffer));
+	}
+ 	else
+	{
+	write(cfd,";",2);
+	}
+}
+
+
+
+
+
+int subUnsub(int cfd,struct User *users,struct Topic *topics,int userCount,char *buffer)
+{
+	int id = userIdByCfd(users,cfd,userCount);
+	int topic_id=atoi(buffer);
+	
+	if(isSubscriber(topics[topic_id],id))
+	{
+	for(int i=0;i<topics[topic_id].subCount;i++)
+	{
+		if(id==topics[topic_id].subscribers[i])  // wyszukuje na ktorym jest miejsu i zastepuje go ostatnim
+		{
+		 topics[topic_id].subscribers[i]=topics[topic_id].subscribers[topics[topic_id].subCount-1];		
+		 topics[topic_id].subCount-=1;
+		 topics[topic_id].subscribers[topics[topic_id].subCount]=-1;
+		 break;
+		}
+	}	
+	updateTopicFile(topics[topic_id]);
+
+	return 0;
+	}
+	else
+	{
+	topics[topic_id].subscribers[ topics[topic_id].subCount ] = id;
+	topics[topic_id].subCount+=1;
+
+	updateTopicFile(topics[topic_id]);
+	return 1;
+	}
+	
+
+}
+
+
 
 
 

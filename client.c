@@ -36,7 +36,7 @@ int main(int argc,char* argv[])
     int opcja=0;
     while(loop)
     {
-	printf("1-poprawnie zaloguj 2-niepoprawnie \n 3-odbierz topicsy 4-logOut \n0-exit\n"); 
+	printf("1-poprawnie zaloguj 2-niepoprawnie \n3-odbierz topicsy 4-logOut \n5-moje topic 0-exit\n6-sub/unsub 2\n"); 
 	memset(buffer, 0, 1024);   
 	scanf("%d",&opcja);
 	switch(opcja)
@@ -69,6 +69,23 @@ int main(int argc,char* argv[])
 	case 4:
 	write(fd,"o",2);
 	break;
+
+
+	case 5:
+	write(fd,"m",2);
+	rc = read(fd,buffer,1024);
+	write(1,buffer,rc);
+	printf("\n\n");
+	break;
+
+	case 6:
+	printf("Sub/unsub topic id2\n");
+	write(fd,"s;2",4);
+	rc = read(fd,buffer,1024);
+	write(1,buffer,rc);
+	printf("\n\n");
+	break;
+
 	case 0:
 	default:
 	loop=0;

@@ -18,13 +18,15 @@ int main(int argc, char** argv) {
   int sfd, cfd, fdmax, fda, rc, i, on = 1;
   struct sockaddr_in saddr, caddr;
   static struct timeval timeout;
-  fd_set rmask, wmask, rLoginMask,wOkLoginMask,wBadLoginMask,wAlreadyLoggedMask,rLoggedMask, wTopicsMask;
+  fd_set rmask, wmask, rLoginMask,wOkLoginMask,wBadLoginMask,wAlreadyLoggedMask,rLoggedMask, wTopicsMask,wMyTopicsMask,wSubMask,wUnsubMask;
   // rLoginMask - maska do odczytu danych logowania
   // wBadLoginMask -  podano zle dane logowania
   // wOkLoginMask - poprawne dane
   // wAlreadyLoggedMask - jest juz zalogowany
   // rLoggedMask - zalogowani uzytkownicy
   // wTopicsMask - do klienta wyslemy liste wszystkich tematow 
+  // wSubMask - wysyla informacje o subskrybowaniu
+  // wUnsubMask - -,,- odsubskrybowaniu
 
   char buffer[1024];  
   int rc2=0; // ile znakow otrzymano od klienta
@@ -45,15 +47,24 @@ int main(int argc, char** argv) {
   FD_ZERO(&wAlreadyLoggedMask);
   FD_ZERO(&rLoggedMask);
   FD_ZERO(&wTopicsMask);
+  FD_ZERO(&wMyTopicsMask);
+  FD_ZERO(&wSubMask);
+  FD_ZERO(&wUnsubMask);
+
 
   fdmax = sfd;
 
   while(1) {
     
-  
-   
-    prepareMasks(sfd,fdmax,&rmask,&wmask,&rLoginMask,&wOkLoginMask,&wBadLoginMask,&wAlreadyLoggedMask,&rLoggedMask,&wTopicsMask);
-
+    //prepareMasks(sfd,fdmax,&rmask,&wmask,&rLoginMask,&wOkLoginMask,&wBadLoginMask,&wAlreadyLoggedMask,&rLoggedMask,&wTopicsMask);
+    FD_SET(sfd, &rmask);
+    for(i = sfd+1; i <= fdmax; i++)
+    {
+	if(FD_ISSET(i,&rLoggedMask)||FD_ISSET(i,&rLoginMask))
+	{FD_SET(i,&rmask);}
+	if(FD_ISSET(i,&wOkLoginMask)||FD_ISSET(i,&wBadLoginMask)||FD_ISSET(i,&wAlreadyLoggedMask)||FD_ISSET(i,&wTopicsMask)||FD_ISSET(i,&wMyTopicsMask)||FD_ISSET(i,&wSubMask)||FD_ISSET(i,&wUnsubMask))
+	{FD_SET(i,&wmask);}
+    }
 	
 
 
@@ -138,7 +149,8 @@ int main(int argc, char** argv) {
 	   }
 	   // wybor akcji:
 	   // 't'-lista wszystkich tematow, '?' - nagle rozlaczenie
-  	   // 'o'-wylogowanie, 
+  	   // 'o'-wylogowanie, 'm' - moje subskrybcje
+	   // 's' - (un)subskrybuj grupe
 	   else if ( (FD_ISSET(i, &rmask))&&(FD_ISSET(i, &rLoggedMask))  ) //&&(!FD_ISSET(i, &wmask))
 	   {
 		
@@ -162,6 +174,23 @@ int main(int argc, char** argv) {
 		{
 		disconnectUser(i,sfd,&fdmax,userCount,users,&rmask,&wmask,&rLoginMask,&rLoggedMask);
 		}
+		else if(buffer[0]=='m')
+		{
+			FD_SET(i,&wMyTopicsMask);
+			FD_CLR(i,&rmask);
+		}
+		else if(buffer[0]=='s')
+		{
+			if(subUnsub(i,users,topics,userCount,buffer+2))	//  "s;ID_TOPIC"
+			{
+			FD_SET(i,&wSubMask);
+			}
+			else
+			{
+			FD_SET(i,&wUnsubMask);
+			}
+			FD_CLR(i,&rmask);
+		}
 
 	   }
 	   // wyslij liste tematow
@@ -169,9 +198,29 @@ int main(int argc, char** argv) {
 	   {
 		sendTopicList(i,topics,topicCount);
 		FD_CLR(i,&wmask);
-		FD_CLR(i,&wTopicsMask);
-		
+		FD_CLR(i,&wTopicsMask);	
 	   }
+	   // wyslij liste moich tematow
+	   else if( (FD_ISSET(i, &wmask))&&(FD_ISSET(i, &wMyTopicsMask) )&&(FD_ISSET(i, &rLoggedMask) ) )
+	   {
+		sendMyTopicList(i,topics,topicCount,users,userCount);
+		FD_CLR(i,&wmask);
+		FD_CLR(i,&wMyTopicsMask);	
+	   }
+	   // informacja Zasubskrybowano/Odsubskrybowano
+	   else if( (FD_ISSET(i, &wmask))&&(FD_ISSET(i, &wSubMask) )&&(FD_ISSET(i, &rLoggedMask) ) )
+	   {
+		write(i,"Zasubskrybowano", 16);
+		FD_CLR(i,&wmask);
+		FD_CLR(i,&wSubMask);	
+	   }
+	   else if( (FD_ISSET(i, &wmask))&&(FD_ISSET(i, &wUnsubMask) )&&(FD_ISSET(i, &rLoggedMask) ) )
+	   {
+		write(i,"Odsubskrybowano", 16);
+		FD_CLR(i,&wmask);
+		FD_CLR(i,&wUnsubMask);	
+	   }
+
 	}
      
 

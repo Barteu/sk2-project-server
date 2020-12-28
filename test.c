@@ -11,6 +11,9 @@
 
 #include <string.h>
 
+#include <dirent.h> 
+
+
 struct User{
   char login[20];
   char password[20];
@@ -57,33 +60,46 @@ int main(int argc,char* argv[])
   
     int topicCount=0;
     
-    while(fscanf(fp,"%s",topics[topicCount].name)>0)
-    {
-	topics[topicCount].subCount=0;
-    printf("\nOdczytano topic: %s", topics[topicCount].name  ); 
-     while(fscanf(fp,"%d",&topics[topicCount].subscribers[topics[topicCount].subCount])>0)
-	{
-	printf(" %d,", topics[topicCount].subscribers[topics[topicCount].subCount]  ); 
-        topics[topicCount].subCount++;
-		
-	}
-    topicCount++;
+   
+    char path[9]="./topics";
+    char path2[64];
+    
+
+    DIR *dir;
+    struct dirent *direntry; 
+    dir = opendir(path);
+    if(!dir) {
+      printf("Error: directory did not open!\n");
     }
-    fclose(fp);
+    while((direntry=readdir(dir))!=NULL) {
+	if(strlen(direntry->d_name)>2)
+	{
+		memset(path2, 0, 64); 
+		strcat(path2,path);
+		strcat(path2,"/");
+		strcat(path2,direntry->d_name);
+		fp = fopen(path2, "r");	
+		fscanf(fp,"%s",topics[topicCount].name);
+		printf("\nOdczytano topic: %s", topics[topicCount].name  );
+		while(fscanf(fp,"%d",&topics[topicCount].subscribers[topics[topicCount].subCount])>0)
+		{
+		printf(" %d,", topics[topicCount].subscribers[topics[topicCount].subCount]  ); 
+        	topics[topicCount].subCount++;	
+		}
+		(topicCount)++;
+		fclose(fp);
+	}
+   }
 
 
     printf("\n\n");
-    fd_set rmask;
-    FD_ZERO(&rmask);
-    FD_SET(4, &rmask);
+    
+    
  
-    dodaj(5,&rmask);
-    for(int i=0;i<7;i++)
-	{
-		if(FD_ISSET(i,&rmask))
-		{printf("%d, ",i);
-		}
-	}	
+    
+ 
+   printf("\n");
+
 
     return EXIT_SUCCESS;
 }

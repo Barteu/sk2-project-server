@@ -11,3 +11,11 @@ void disconnectUser(int cfd,int sfd,int *fdmax,int userCount, struct User *users
 int existsCfd(struct User *users,int cfd,int userCount);
 
 void sendTopicList(int cfd,struct Topic *topics,int topicCount);
+
+int userIdByCfd(struct User *users,int cfd,int userCount);
+
+int isSubscriber(struct Topic topic,int id);
+
+void sendMyTopicList(int cfd,struct Topic *topics,int topicCount,struct User *users,int userCount);
+
+int subUnsub(int cfd,struct User *users,struct Topic *topics,int userCount,char *buffer);

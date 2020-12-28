@@ -13,7 +13,7 @@
 
 #include <string.h>
 
-
+#include <dirent.h>
 
 struct User{
   char login[20];
@@ -26,6 +26,7 @@ struct User{
 
 struct Topic {
   char name[40];
-  int subscribers[1024];
+  int subscribers[1024]; // id subskrybentow
   int subCount;
+  int id;
 };
