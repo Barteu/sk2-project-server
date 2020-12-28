@@ -1,3 +1,4 @@
 janek2 Auto1234 Janeczek
 karol3 Rower1234 Karol
 marta12 Kwiatek5678 Marta
+test1 haslo1 tester

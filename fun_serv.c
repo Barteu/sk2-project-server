@@ -47,20 +47,6 @@ int checkLogin(struct User *users, char *buffer,int len,int userCount, int cfd)
 }
 
 
-void prepareMasks(int sfd,int fdmax,fd_set *rmask,fd_set *wmask,fd_set *rLoginMask,fd_set *wOkLoginMask,fd_set *wBadLoginMask,fd_set *wAlreadyLoggedMask,fd_set *rLoggedMask,fd_set *wTopicsMask)
-{ 
-   
-    FD_SET(sfd, rmask);
-    for(int i = sfd+1; i <= fdmax; i++)
-    {
-	if(FD_ISSET(i,rLoggedMask)||FD_ISSET(i,rLoginMask))
-	{FD_SET(i,rmask);}
-	if(FD_ISSET(i,wOkLoginMask)||FD_ISSET(i,wBadLoginMask)||FD_ISSET(i,wAlreadyLoggedMask)||FD_ISSET(i,wTopicsMask))
-	{FD_SET(i,wmask);}
-    }
-}
-
-
 void logOut(int cfd,struct User *users, int userCount)
 {
 	for(int i=0;i<userCount;i++)
@@ -208,6 +194,93 @@ int subUnsub(int cfd,struct User *users,struct Topic *topics,int userCount,char 
 	
 
 }
+
+
+int insertTopic(int cfd,struct User *users,struct Topic *topics,int userCount,int *topicCount,char *buffer)
+{
+	// sprawdzam czy jest juz taki temat
+	for(int i=0;i<*topicCount;i++)
+	{
+		if(strcmp(buffer,topics[i].name)==0)
+		{
+		return 0;
+		}
+	}
+	
+	strcpy(topics[*topicCount].name,buffer);
+	topics[*topicCount].id=*topicCount;
+	topics[*topicCount].subCount=1;
+	topics[*topicCount].subscribers[0]=userIdByCfd(users,cfd,userCount);
+	(*topicCount)++;
+
+	updateTopicFile(topics[(*topicCount)-1]);
+	return 1;
+}
+
+int addMessage(int cfd,struct User *users,struct Topic *topics,int userCount,int topicCount,char *buffer,int *msgCount,int *msgsIDs)
+{
+  struct Message msg;
+  int j=0;
+  int z=0;
+  char buff[64];  // na poczatku buforuje ID tematu a potem tytul
+
+  int sender_id=userIdByCfd(users,cfd,userCount);
+
+  while(buffer[j]!=';')
+  {
+    buff[j]=buffer[j];
+    j++;
+  }
+  
+  msg.id=(*msgCount)+1;
+  msg.topicId=atoi(buff);
+  
+  if(isSubscriber(topics[msg.topicId],sender_id))
+  {
+	  memset(buff,0,64);
+	  j++;
+	  while(buffer[j]!=';')
+	  {
+	    buff[z]=buffer[j];
+	    j++;
+	    z++;
+	  }
+	  strcpy(msg.title,buff);
+	  strcpy(msg.text,buffer+j+1);
+	  
+	  msg.toSend=0;
+	  
+	  for(int i=0;i<userCount;i++)
+	  {
+	    if(isSubscriber(topics[msg.topicId], users[i].id)&&users[i].id!=sender_id)
+		{
+		  msg.recipients[msg.toSend]=users[i].id;
+		  msg.toSend+=1;
+		}
+	  }
+		
+        msgsIDs[*msgCount]=msg.id;
+        (*msgCount)+=1;
+
+        createMsgFile(msg);
+
+	return 1;
+  }
+  else
+  {
+  	return 0; //proba wyslania wiadomosci do niesubskrybowanego tematu
+  }
+
+
+  
+ 
+
+  
+}
+
+
+
+
 
 
 

@@ -30,3 +30,13 @@ struct Topic {
   int subCount;
   int id;
 };
+
+struct Message {
+  int id;
+  int  topicId;
+  char title[64];
+  char text[1024];
+  int toSend;
+  int recipients[1024];
+  
+};

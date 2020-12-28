@@ -36,7 +36,7 @@ int main(int argc,char* argv[])
     int opcja=0;
     while(loop)
     {
-	printf("1-poprawnie zaloguj 2-niepoprawnie \n3-odbierz topicsy 4-logOut \n5-moje topic 0-exit\n6-sub/unsub 2\n"); 
+	printf("1-poprawnie zaloguj 2-niepoprawnie \n3-odbierz topicsy 4-logOut \n5-moje topic 0-exit\n6-sub/unsub 2|7-nowy temat\n8-wyslij wiadomosc| \n"); 
 	memset(buffer, 0, 1024);   
 	scanf("%d",&opcja);
 	switch(opcja)
@@ -85,6 +85,37 @@ int main(int argc,char* argv[])
 	write(1,buffer,rc);
 	printf("\n\n");
 	break;
+
+	case 7:
+	printf("Probuje dodac temat Klocki\n");
+	write(fd,"n;Klocki",8);
+	rc = read(fd,buffer,1024);
+	write(1,buffer,rc);
+	printf("\n\n");
+	break;
+
+	case 8:
+	printf("Podaj ID tematu;Tytul;Tresc  jezeli dasz ? to automatycznie\n"); 
+        char id_tyt_tr[1024];
+	scanf("%s",id_tyt_tr);
+	char do_wyslania[1024];
+	if(id_tyt_tr[0]!='?')
+	{
+		strcpy(do_wyslania,"e;");
+        	strcat(do_wyslania,id_tyt_tr);
+		
+	}
+	else
+	{
+	strcpy(do_wyslania,"e;1;Przykladowy Tytul;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam metus est, interdum quis aliquam sed, hendrerit a elit. Ut malesuada dolor vel metus dapibus, ac volutpat massa volutpat. \nSed eget vel.");
+	}
+	
+        write(fd,do_wyslania,strlen(do_wyslania));
+	rc = read(fd,buffer,1024);
+	write(1,buffer,rc);
+	printf("\n\n");
+	break;
+
 
 	case 0:
 	default:

@@ -11,7 +11,7 @@ void initUsers(int *userCount,struct User *users)
     while(fscanf(fp,"%s %s %s", users[*userCount].login, users[*userCount].password, users[*userCount].nickname)>0)
     {
     printf("Odczytano: %s %s %s\n",   users[*userCount].login, users[*userCount].password, users[*userCount].nickname); 
-    users[*userCount].id=(*userCount);
+    users[*userCount].id=((*userCount)+1);  // uwaga zmienione bardzo pozno
     users[*userCount].state='n';
     (*userCount)++;
     }   
@@ -71,6 +71,46 @@ void updateTopicFile(struct Topic topic)
     fprintf(fp,"%d\n",topic.subscribers[i]);
     }
     fclose(fp);
+}
+
+void createMsgFile(struct Message msg)
+{
+    FILE *fp;
+    char path[64]="./messages/";
+    char s_id[64];
+
+    snprintf(s_id,64,"%d",msg.id);
+    strcat(path,s_id);
+    strcat(path,".txt");
+    fp = fopen(path,"w+");
+    /* zapisze:
+    id
+    topicId
+    ;
+    title
+    ;
+    text
+    ;
+    to Send
+    ;
+    recipients id id id id     
+    */
+
+
+    fprintf(fp,"%d\n",msg.id);
+    fprintf(fp,"%d\n;",msg.topicId);
+    fprintf(fp,"%s\n;\n",msg.title);
+    fprintf(fp,"%s\n;\n",msg.text);
+    fprintf(fp,"%d\n;\n",msg.toSend);
+
+    for(int i=0;i<msg.toSend;i++)
+    {
+    fprintf(fp,"%d\n",msg.recipients[i]);
+    }
+
+
+    fclose(fp);
+
 
 
 }
