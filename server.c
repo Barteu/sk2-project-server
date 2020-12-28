@@ -13,12 +13,13 @@ int main(int argc, char** argv) {
   
   initUsers(&userCount,users);
   initTopics(&topicCount,topics);
+  initMsgs(&msgCount,msgsIDs);
 
   socklen_t slt;
   int sfd, cfd, fdmax, fda, rc, i, on = 1;
   struct sockaddr_in saddr, caddr;
   static struct timeval timeout;
-  fd_set rmask, wmask, rLoginMask,wOkLoginMask,wBadLoginMask,wAlreadyLoggedMask,rLoggedMask, wTopicsMask,wMyTopicsMask,wSubMask,wUnsubMask,wNewTopicOk,wNewTopicError,wMsgOkMask,wMsgErrorMask;
+  fd_set rmask, wmask, rLoginMask,wOkLoginMask,wBadLoginMask,wAlreadyLoggedMask,rLoggedMask, wTopicsMask,wMyTopicsMask,wSubMask,wUnsubMask,wNewTopicOk,wNewTopicError,wMsgOkMask,wMsgErrorMask,wMsgRequestMask;
   // rLoginMask - maska do odczytu danych logowania
   // wBadLoginMask -  podano zle dane logowania
   // wOkLoginMask - poprawne dane
@@ -31,6 +32,7 @@ int main(int argc, char** argv) {
   // wNewTopicError - blad w tworzeniu tematu
   // wMsgOkMask - pomyslnie umieszczono wiadomosc
   // wMsgErrorMask - nie umieszczono wiadomosci
+  // wMsgRequestMask
   char buffer[1024];  
   int rc2=0; // ile znakow otrzymano od klienta
 
@@ -57,7 +59,7 @@ int main(int argc, char** argv) {
   FD_ZERO(&wNewTopicError);
   FD_ZERO(&wMsgOkMask);
   FD_ZERO(&wMsgErrorMask);
-
+  FD_ZERO(&wMsgRequestMask);
   fdmax = sfd;
 
   while(1) {
@@ -67,7 +69,7 @@ int main(int argc, char** argv) {
     {
 	if(FD_ISSET(i,&rLoggedMask)||FD_ISSET(i,&rLoginMask))
 	{FD_SET(i,&rmask);}
-	if(FD_ISSET(i,&wOkLoginMask)||FD_ISSET(i,&wBadLoginMask)||FD_ISSET(i,&wAlreadyLoggedMask)||FD_ISSET(i,&wTopicsMask)||FD_ISSET(i,&wMyTopicsMask)||FD_ISSET(i,&wSubMask)||FD_ISSET(i,&wUnsubMask)||FD_ISSET(i,&wNewTopicOk)||FD_ISSET(i,&wNewTopicError)||FD_ISSET(i,&wMsgOkMask)||FD_ISSET(i,&wMsgErrorMask))
+	if(FD_ISSET(i,&wOkLoginMask)||FD_ISSET(i,&wBadLoginMask)||FD_ISSET(i,&wAlreadyLoggedMask)||FD_ISSET(i,&wTopicsMask)||FD_ISSET(i,&wMyTopicsMask)||FD_ISSET(i,&wSubMask)||FD_ISSET(i,&wUnsubMask)||FD_ISSET(i,&wNewTopicOk)||FD_ISSET(i,&wNewTopicError)||FD_ISSET(i,&wMsgOkMask)||FD_ISSET(i,&wMsgErrorMask)||FD_ISSET(i,&wMsgRequestMask))
 	{FD_SET(i,&wmask);}
     }
 	
@@ -156,7 +158,7 @@ int main(int argc, char** argv) {
 	   // 't'-lista wszystkich tematow, '?' - nagle rozlaczenie
   	   // 'o'-wylogowanie, 'm' - moje subskrybcje
 	   // 's' - (un)subskrybuj grupe 'n' - nowy temat
-           // 'e' - wyslij wiadomosc
+           // 'e' - wyslij wiadomosc 'r' - odbierz wiadomosci
 	   else if ( (FD_ISSET(i, &rmask))&&(FD_ISSET(i, &rLoggedMask))  ) //&&(!FD_ISSET(i, &wmask))
 	   {
 		
@@ -165,7 +167,6 @@ int main(int argc, char** argv) {
 
 		if(buffer[0]=='t')
 		{
-	
 			FD_SET(i,&wTopicsMask);
 			FD_CLR(i,&rmask);
 		}
@@ -221,6 +222,12 @@ int main(int argc, char** argv) {
 			}
 			FD_CLR(i,&rmask);
 		}
+		else if(buffer[0]=='r')
+		{
+			FD_SET(i,&wMsgRequestMask);
+			FD_CLR(i,&rmask);
+		}
+
 	   }
 	   // wyslij liste tematow
 	   else if( (FD_ISSET(i, &wmask))&&(FD_ISSET(i, &wTopicsMask) )&&(FD_ISSET(i, &rLoggedMask) ) )
@@ -275,12 +282,20 @@ int main(int argc, char** argv) {
 		FD_CLR(i,&wmask);
 		FD_CLR(i,&wMsgErrorMask);	
 	   }
-
+	   // wyslij wiadomosci
+	   else if( (FD_ISSET(i, &wmask))&&(FD_ISSET(i, &wMsgRequestMask) )&&(FD_ISSET(i, &rLoggedMask) ) )
+	   {
+		if(sendMsg(i,users,topics,userCount,topicCount,&msgCount,msgsIDs)<1)
+		{
+		FD_CLR(i,&wMsgRequestMask);
+		}
+		FD_CLR(i,&wMsgRequestMask);
+		FD_CLR(i,&wmask);
+		
+	   }
 
 	}
      
-
-
    
   }
 

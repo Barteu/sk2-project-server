@@ -58,6 +58,37 @@ void initTopics(int *topicCount,struct Topic *topics)
 }
 
 
+void initMsgs(int *msgCount,int *msgsIDs)
+{
+
+    FILE *fp;
+    char path[11]="./messages";
+    char path2[64]="./messages";
+ 
+    DIR *dir;
+    struct dirent *direntry; 
+    dir = opendir(path);
+    if(!dir) {
+      printf("Error: directory did not open!\n");
+    }
+    while((direntry=readdir(dir))!=NULL) {
+	if(strlen(direntry->d_name)>2)
+	{
+		memset(path2, 0, 64); 
+		strcat(path2,path);
+		strcat(path2,"/");
+		strcat(path2,direntry->d_name);
+		fp = fopen(path2, "r");	
+		fscanf(fp,"%d",&msgsIDs[*msgCount]);
+		printf("\nOdczytano id wiad: %d\n", msgsIDs[*msgCount]);
+		(*msgCount)++;
+		fclose(fp);
+	}
+   }
+   closedir(dir);
+}
+
+
 void updateTopicFile(struct Topic topic)
 {
     FILE *fp;
@@ -93,12 +124,13 @@ void createMsgFile(struct Message msg)
     ;
     to Send
     ;
-    recipients id id id id     
+    id 
+    id
+    id
+    id     
     */
-
-
     fprintf(fp,"%d\n",msg.id);
-    fprintf(fp,"%d\n;",msg.topicId);
+    fprintf(fp,"%d\n;\n",msg.topicId);
     fprintf(fp,"%s\n;\n",msg.title);
     fprintf(fp,"%s\n;\n",msg.text);
     fprintf(fp,"%d\n;\n",msg.toSend);
@@ -107,14 +139,140 @@ void createMsgFile(struct Message msg)
     {
     fprintf(fp,"%d\n",msg.recipients[i]);
     }
-
-
     fclose(fp);
+}
 
 
+int scanMsg(struct Message *msg,int recipient_id,int indx)
+{
+ 
+    FILE *fp;
+    char path[64]="./messages/";
+    char s_id[32];
+    snprintf(s_id,32,"%d",indx);
+    strcat(path,s_id);
+    strcat(path,".txt");
+    fp = fopen(path,"r");
+    int l=0;
+    char c;
+    char buffer[1024];
+    memset(buffer,0,1024);
+    int found=0;
+
+    if((*msg).id==-1)
+    {
+	    fscanf(fp,"%d",&msg->id);
+	    fscanf(fp,"%d",&msg->topicId);
+	    do
+	    {
+		c=fgetc(fp);
+	    }while(c!=';');
+	    do
+	    {
+		c=fgetc(fp);
+		if(c!='\n'&&c!=';')
+		{
+		buffer[l]=c;
+		l++;
+		printf("CHARAKTER: %c\n",c);
+		}
+		
+	    }while(c!=';');
+
+	    strncpy((*msg).title,buffer,strlen(buffer));// TGUEATETE
+	    memset(buffer,0,1024);
+	    l=0;
+	    do
+	    {
+		c=fgetc(fp);
+		if(c!='\n'&&c!=';')
+		{
+		buffer[l]=c;
+		l++;
+		printf("CHARAKTER: %c\n",c);
+		}
+	    }while(c!=';');
+	    strncpy((*msg).text,buffer,strlen(buffer));
+	    fscanf(fp,"%d",&msg->toSend);
+	    do
+	    {
+		c=fgetc(fp);
+	    }while(c!=';');
+	    for(int i=0;i<(*msg).toSend;i++)
+	    {
+	    fscanf(fp,"%d",&msg->recipients[i]);
+		if((*msg).recipients[i]==recipient_id)
+		{
+		found=1;
+			printf("ZNALEZIONO !!!\n");
+		}
+	    }
+	    if(found==0)
+	   {
+	     (*msg).id=-1;
+	   }
+    }
+    else
+    {
+	    fscanf(fp,"%d",&l);
+	    fscanf(fp,"%d",&l);
+	    l=0;
+	    do
+	    {
+		c=fgetc(fp);
+	    }while(c!=';');
+	    do
+	    {
+		c=fgetc(fp);
+		buffer[l]=c;
+		l++;
+	    }while(c!=';');
+	    memset(buffer,0,1024);
+	    l=0;
+	    do
+	    {
+		c=fgetc(fp);
+		buffer[l]=c;
+		l++;
+	    }while(c!=';');
+	    fscanf(fp,"%d",&l);
+		int toSend=l;
+	    do
+	    {
+		c=fgetc(fp);
+	    }while(c!=';');
+	    for(int i=0;i<toSend;i++)
+	    {
+	    fscanf(fp,"%d",&l);
+		if(l==recipient_id)
+		{
+		found=1;
+		}
+	    }
+
+
+    }
+   fclose(fp);
+   if(found)
+   {
+	return 1;
+   }
+
+   return 0;
 
 }
 
 
+void delMsg(int id)
+{
+ char buff[32];
+ snprintf(buff,32,"%d",id);
+ char path[256];
+ strcpy(path,"./messages/");
+ strcat(path,buff);
+ strcat(path,".txt");
+ remove(path);
+
+}
 
 

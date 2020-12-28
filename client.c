@@ -22,7 +22,7 @@ int main(int argc,char* argv[])
     struct hostent* addrent;
 
     char okLogin[40]="karol3;Rower1234"; 
-    char badLogin[40]="siema;eniu";
+    //char badLogin[40]="siema;eniu";
    
     addrent = gethostbyname(argv[1]);
     fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -36,7 +36,7 @@ int main(int argc,char* argv[])
     int opcja=0;
     while(loop)
     {
-	printf("1-poprawnie zaloguj 2-niepoprawnie \n3-odbierz topicsy 4-logOut \n5-moje topic 0-exit\n6-sub/unsub 2|7-nowy temat\n8-wyslij wiadomosc| \n"); 
+	printf("1-poprawnie zaloguj 2-recznie zaloguj \n3-odbierz topicsy 4-logOut \n5-moje topic 0-exit\n6-sub/unsub 2|7-nowy temat\n8-wyslij wiadomosc|9- popros o wiadomosc \n"); 
 	memset(buffer, 0, 1024);   
 	scanf("%d",&opcja);
 	switch(opcja)
@@ -52,8 +52,11 @@ int main(int argc,char* argv[])
 	break;
 	
 	case 2:
-	  write(fd,badLogin,11);
-         write(1,"wyslano log\n",12);
+
+ 	  printf("podaj: login;haslo\n");
+	char dane[64];
+	scanf("%s",dane);
+	 write(fd,dane,strlen(dane)+1);
 
          rc = read(fd,buffer,1024);
          write(1,buffer,rc);	
@@ -111,6 +114,15 @@ int main(int argc,char* argv[])
 	}
 	
         write(fd,do_wyslania,strlen(do_wyslania));
+	rc = read(fd,buffer,1024);
+	write(1,buffer,rc);
+	printf("\n\n");
+	break;
+
+
+	case 9:
+	printf("Prosze o wiadomosc\n");
+	write(fd,"r",2);
 	rc = read(fd,buffer,1024);
 	write(1,buffer,rc);
 	printf("\n\n");

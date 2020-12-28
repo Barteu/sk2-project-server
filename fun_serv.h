@@ -21,3 +21,5 @@ int subUnsub(int cfd,struct User *users,struct Topic *topics,int userCount,char 
 int insertTopic(int cfd,struct User *users,struct Topic *topics,int userCount,int *topicCount,char *buffer);
 
 int addMessage(int cfd,struct User *users,struct Topic *topics,int userCount,int topicCount,char *buffer,int *msgCount,int *msgsIDs);
+
+int sendMsg(int cfd,struct User *users,struct Topic *topics,int userCount,int topicCount,int *msgCount,int *msgsIDs);

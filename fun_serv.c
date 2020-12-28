@@ -269,15 +269,104 @@ int addMessage(int cfd,struct User *users,struct Topic *topics,int userCount,int
   else
   {
   	return 0; //proba wyslania wiadomosci do niesubskrybowanego tematu
-  }
-
-
-  
- 
-
-  
+  }  
 }
 
+
+int sendMsg(int cfd,struct User *users,struct Topic *topics,int userCount,int topicCount,int *msgCount,int *msgsIDs)
+{
+	struct Message msg;
+	msg.id=-1;
+
+	int recipient_id=userIdByCfd(users,cfd,userCount);
+
+	int msgCountCpy=*msgCount;
+	int found=0;
+	char buffer[1024]="/0";
+	char buff[64]="/0";
+
+	for(int j=0;j<msgCountCpy;j++)
+	{
+	found+=scanMsg(&msg,recipient_id,msgsIDs[j]);		
+		if(found==0)
+		{
+		memset(msg.recipients,0,sizeof msg.recipients);
+	       	memset(msg.title,0,64);
+	     	memset(msg.text,0,1024);
+		}	
+	   printf("Stitle: %d %s\n",j,msg.title);
+		printf("Stext: %d %s\n",j,msg.text);
+	}
+	printf("-----------\n");
+	if(found)
+	{
+
+		printf("title: %s\n",msg.title);
+		printf("text: %s\n",msg.text);
+
+
+
+
+		snprintf(buffer,64,"%d",found);		// ILE_WIADOMOSCI;NAZWA_KOLEJKI;ID_KOLEJKI;TEMAT;WIADOMOSC
+		strcat(buffer,";");		
+		for(int i=0;i<topicCount;i++)
+		{
+			if(topics[i].id==msg.topicId)
+			{
+			strcpy(buff,topics[i].name);
+			break;
+			}
+		}
+		strcat(buffer,buff);
+		strcat(buffer,";");
+		memset(buff,0,64);
+		snprintf(buff,64,"%d",msg.topicId);	
+		strcat(buffer,buff);
+		strcat(buffer,";");
+		strcat(buffer,msg.title);
+		strcat(buffer,";");
+		strcat(buffer,msg.text);
+		write(cfd,buffer,strlen(buffer));
+
+		if(msg.toSend>1)
+		{
+		for(int i=0;i<msg.toSend;i++)
+		{
+			if(recipient_id==msg.recipients[i])
+			{
+			msg.recipients[i]=msg.recipients[msg.toSend-1];
+			msg.recipients[msg.toSend-1]=0;
+			break;
+			}
+		}
+		msg.toSend-=1;
+		createMsgFile(msg);
+		memset(msg.text,0,1024);
+		}
+		else
+		{
+		// mozna usunac wiadomosc
+			for(int i=0;i<*msgCount;i++)
+			{
+				if(msgsIDs[i]==msg.id)
+				{
+					msgsIDs[i]=msgsIDs[(*msgCount)-1];
+					msgsIDs[(*msgCount)-1]=0;
+					(*msgCount)-=1;
+					delMsg(msg.id);
+					break;
+				}
+			}		
+		}
+	}
+	else
+	{
+	write(cfd,"0;",3);
+
+	}
+	
+	return found-1;
+}
 
 
 

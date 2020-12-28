@@ -38,5 +38,4 @@ struct Message {
   char text[1024];
   int toSend;
   int recipients[1024];
-  
 };
