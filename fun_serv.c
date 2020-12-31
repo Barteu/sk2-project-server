@@ -9,7 +9,7 @@ int checkLogin(struct User *users, char *buffer,int len,int userCount, int cfd)
 	}
 
 	char login[20];
-	char password[20];
+	char password[20]="/0";
 	int j=0;
 	while(buffer[j]!=';')
 	{
@@ -51,6 +51,7 @@ void logOut(int cfd,struct User *users, int userCount)
 	  {
 	     users[i].cfd=-1;
 	     users[i].state='n';
+	     printf("user (id: %d) logged out! \n",users[i].id);
              break;
 	  }
 	}
@@ -58,13 +59,13 @@ void logOut(int cfd,struct User *users, int userCount)
 
 void disconnectUser(int cfd,int sfd,int *fdmax,int userCount, struct User *users,fd_set *rmask,fd_set *wmask,fd_set *rLoginMask,fd_set *rLoggedMask){
 
-  printf("client disconnected! (cfd: %d) \n",cfd);
+  
   logOut(cfd,users,userCount);
   FD_CLR(cfd,rmask);
   FD_CLR(cfd,wmask);
   FD_CLR(cfd,rLoggedMask);	
   FD_CLR(cfd,rLoginMask);
-
+  printf("client disconnected! (cfd: %d) \n",cfd);
   if (cfd == *fdmax)
   {
     while((*fdmax) > sfd && !FD_ISSET(*fdmax, rLoggedMask) && !FD_ISSET(*fdmax, rLoginMask)&& !existsCfd(users,*fdmax,userCount))
@@ -212,7 +213,7 @@ int insertTopic(int cfd,struct User *users,struct Topic *topics,int userCount,in
 	int userID=userIdByCfd(users,cfd,userCount);
 
 	strcpy(topics[*topicCount].name,buffer);
-	topics[*topicCount].id=*topicCount;
+	topics[*topicCount].id=*topicCount+1;
 	topics[*topicCount].subCount=1;
 	topics[*topicCount].subscribers[0]=userID;
 	(*topicCount)++;

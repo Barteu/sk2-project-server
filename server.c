@@ -145,7 +145,9 @@ int main(int argc, char** argv) {
 	   }
 	   else if ( (FD_ISSET(i, &wmask))&&(FD_ISSET(i, &wBadLoginMask) ) )
 	   {
+		//printf("bledne daneee\n");
 		write(i,"Bledne dane logowania!", 23);
+		//close(i);
 	 	FD_SET(i,&rLoginMask);
 		FD_CLR(i,&wBadLoginMask);
 		FD_CLR(i,&wmask);

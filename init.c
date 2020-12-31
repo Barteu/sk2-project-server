@@ -21,7 +21,7 @@ void initUsers(int *userCount,struct User *users)
 
 void initTopics(int *topicCount,struct Topic *topics)
 {
-    
+    // topic_id name user_id user_id...
     FILE *fp;
     char path[9]="./topics";
     char path2[64]="./topics";
@@ -38,19 +38,21 @@ void initTopics(int *topicCount,struct Topic *topics)
     {
 	if(strlen(direntry->d_name)>2)
 	{
+		
 		memset(path2, 0, 64); 
 		strcat(path2,path);
 		strcat(path2,"/");
 		strcat(path2,direntry->d_name);
 		fp = fopen(path2, "r");	
+		fscanf(fp,"%d",&topics[*topicCount].id);
 		fscanf(fp,"%s",topics[*topicCount].name);
-		printf("loaded topic: %s\n", topics[*topicCount].name  );
+		printf("loaded topic: %s ,id: %d\n", topics[*topicCount].name,topics[*topicCount].id );
 
 		while(fscanf(fp,"%d",&topics[*topicCount].subscribers[topics[*topicCount].subCount])>0)
 		{
 		  //printf(" %d,", topics[*topicCount].subscribers[topics[*topicCount].subCount]  ); 
 		  topics[*topicCount].subCount++;	
-		  topics[*topicCount].id=(*topicCount);
+		  
 		}
 		
 		(*topicCount)++;
@@ -103,6 +105,7 @@ void updateTopicFile(struct Topic topic)
     strcat(path,topic.name);
     strcat(path,".txt");
     fp = fopen(path,"w+");
+    fprintf(fp,"%d\n",topic.id);
     fprintf(fp,"%s\n",topic.name);
     for(int i=0;i<topic.subCount;i++)
     {
