@@ -25,7 +25,7 @@ int isSubscriber(struct Topic topic,int id);
 void sendMyTopicList(int cfd,struct Topic *topics,int topicCount,struct User *users,int userCount);
 
 //subskrbuje lub odsubskrybuje temat przez uzytkownika
-int subUnsub(int cfd,struct User *users,struct Topic *topics,int userCount,char *buffer);
+int subUnsub(int cfd,struct User *users,struct Topic *topics,int userCount,char *buffer, int topicCount);
 
 //dodaje nowy temat
 int insertTopic(int cfd,struct User *users,struct Topic *topics,int userCount,int *topicCount,char *buffer);
@@ -35,3 +35,6 @@ int addMessage(int cfd,struct User *users,struct Topic *topics,int userCount,int
 
 //wysyla wiadomosc uzytkownikowi o danym cfd
 int sendMsg(int cfd,struct User *users,struct Topic *topics,int userCount,int topicCount,int *msgCount,int *msgsIDs);
+
+//zwaraca indeks tematu o danym id w tablicy tematow 
+int topicIndxByID(struct Topic *topics,int topic_id,int topicCount);

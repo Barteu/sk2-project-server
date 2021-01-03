@@ -21,7 +21,7 @@ int main(int argc,char* argv[])
     struct sockaddr_in saddr;
     struct hostent* addrent;
 
-    char okLogin[40]="karol3;Rower1234"; 
+    char okLogin[40]="karol3|Rower1234"; 
     //char badLogin[40]="siema;eniu";
    
     addrent = gethostbyname(argv[1]);
@@ -53,7 +53,7 @@ int main(int argc,char* argv[])
 	
 	case 2:
 
- 	  printf("podaj: login;haslo\n");
+ 	  printf("podaj: login|haslo\n");
 	char dane[64];
 	scanf("%s",dane);
 	 write(fd,dane,strlen(dane)+1);
@@ -83,7 +83,7 @@ int main(int argc,char* argv[])
 
 	case 6:
 	printf("Sub/unsub topic id2\n");
-	write(fd,"s;2",4);
+	write(fd,"s|2",4);
 	rc = read(fd,buffer,1024);
 	write(1,buffer,rc);
 	printf("\n\n");
@@ -91,26 +91,26 @@ int main(int argc,char* argv[])
 
 	case 7:
 	printf("Probuje dodac temat Klocki\n");
-	write(fd,"n;Klocki",8);
+	write(fd,"n|Klocki",8);
 	rc = read(fd,buffer,1024);
 	write(1,buffer,rc);
 	printf("\n\n");
 	break;
 
 	case 8:
-	printf("Podaj ID tematu;Tytul;Tresc  jezeli dasz ? to automatycznie\n"); 
+	printf("Podaj ID tematu|Tytul|Tresc  jezeli dasz ? to automatycznie\n"); 
         char id_tyt_tr[1024];
 	scanf("%s",id_tyt_tr);
 	char do_wyslania[1024];
 	if(id_tyt_tr[0]!='?')
 	{
-		strcpy(do_wyslania,"e;");
+		strcpy(do_wyslania,"e|");
         	strcat(do_wyslania,id_tyt_tr);
 		
 	}
 	else
 	{
-	strcpy(do_wyslania,"e;1;Przykladowy Tytul;Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam metus est, interdum quis aliquam sed, hendrerit a elit. Ut malesuada dolor vel metus dapibus, ac volutpat massa volutpat. \nSed eget vel.");
+	strcpy(do_wyslania,"e|2|Przykladowy Tytul|Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc dui neque, pulvinar vitae est sed, congue vestibulum urna. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Proin interdum ante neque, vitae consequat turpis varius sed. Nulla nec facilisis mauris. Aenean volutpat ullamcorper nisi, in auctor felis tristique malesuada. Quisque eleifend consequat ligula, sit amet luctus neque scelerisque at. Duis vel neque sit amet lacus volutpat consequat. Sed sollicitudin massa nec ante porttitor bibendum.\n Sed rutrum, justo rutrum tempor euismod, dui mauris pharetra dui, et rhoncus magna sem id nisi. Quisque imperdiet turpis sed lacus pulvinar malesuada. Vestibulum laoreet elit in orci convallis aliquet. Sed mollis sem id mollis molestie. In eu est est. Etiam ut bibendum lacus. Donec tincidunt volutpat bibendum. Vestibulum sed nisi eget velit ultrices nec.");
 	}
 	
         write(fd,do_wyslania,strlen(do_wyslania));

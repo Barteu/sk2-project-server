@@ -8,10 +8,10 @@ int checkLogin(struct User *users, char *buffer,int len,int userCount, int cfd)
 	  return -1;  // client wylaczyl program
 	}
 
-	char login[20];
+	char login[20]="/0";
 	char password[20]="/0";
 	int j=0;
-	while(buffer[j]!=';')
+	while(buffer[j]!='|')
 	{
 	  login[j]=buffer[j];
 	  j++;
@@ -115,6 +115,20 @@ int isSubscriber(struct Topic topic,int id)
   return 0;
 }
 
+
+int topicIndxByID(struct Topic *topics,int topic_id,int topicCount)
+{
+	for(int i=0;i<topicCount;i++)
+	{
+	  if(topics[i].id==topic_id)
+	  {
+	  return i;
+	  }
+	}
+
+	return 0;
+}
+
 void sendTopicList(int cfd,struct Topic *topics,int topicCount)
 {
  	char buffer[2048]="\0";
@@ -122,10 +136,10 @@ void sendTopicList(int cfd,struct Topic *topics,int topicCount)
  	for(int i=0;i<topicCount;i++)
 	{
 	  strcat(buffer,topics[i].name);
-	  strcat(buffer,";");
+	  strcat(buffer,"|");
 	  snprintf(bufferID,4,"%d",topics[i].id);
 	  strcat(buffer,bufferID);
-	  strcat(buffer,";");
+	  strcat(buffer,"|");
 	}
  	write(cfd,buffer,strlen(buffer));
 	printf("sent topic list to cfd: %d\n",cfd);
@@ -143,10 +157,10 @@ void sendMyTopicList(int cfd,struct Topic *topics,int topicCount,struct User *us
 		if(isSubscriber(topics[i],id))
 		{
 		  strcat(buffer,topics[i].name);
-		  strcat(buffer,";");
+		  strcat(buffer,"|");
 		  snprintf(bufferID,4,"%d",topics[i].id);
 		  strcat(buffer,bufferID);
-		  strcat(buffer,";");
+		  strcat(buffer,"|");
 		}
 	}
 	if(strlen(buffer)>0)
@@ -156,7 +170,7 @@ void sendMyTopicList(int cfd,struct Topic *topics,int topicCount,struct User *us
 	}
  	else
 	{
-	  write(cfd,";",2);
+	  write(cfd,"|",2);
 	  printf("sent empty list to cfd: %d\n",cfd);
 	}
 }
@@ -165,33 +179,35 @@ void sendMyTopicList(int cfd,struct Topic *topics,int topicCount,struct User *us
 
 
 
-int subUnsub(int cfd,struct User *users,struct Topic *topics,int userCount,char *buffer)
+int subUnsub(int cfd,struct User *users,struct Topic *topics,int userCount,char *buffer, int topicCount)
 {
 	int id = userIdByCfd(users,cfd,userCount);
 	int topic_id=atoi(buffer);
 	
-	if(isSubscriber(topics[topic_id],id))
+	int topicINDX = topicIndxByID(topics,topic_id,topicCount);
+
+	if(isSubscriber(topics[topicINDX],id))
 	{
-	for(int i=0;i<topics[topic_id].subCount;i++)
+	for(int i=0;i<topics[topicINDX].subCount;i++)
 	{
-		if(id==topics[topic_id].subscribers[i])  // wyszukuje na ktorym jest miejsu i zastepuje go ostatnim
+		if(id==topics[topicINDX].subscribers[i])  // wyszukuje na ktorym jest miejsu i zastepuje go ostatnim
 		{
-		   topics[topic_id].subscribers[i]=topics[topic_id].subscribers[topics[topic_id].subCount-1];		
-		   topics[topic_id].subCount-=1;
-		   topics[topic_id].subscribers[topics[topic_id].subCount]=-1;
+		   topics[topicINDX].subscribers[i]=topics[topicINDX].subscribers[topics[topicINDX].subCount-1];		
+		   topics[topicINDX].subCount-=1;
+		   topics[topicINDX].subscribers[topics[topicINDX].subCount]=-1;
 		   break;
 		}
 	}	
-	updateTopicFile(topics[topic_id]);
+	updateTopicFile(topics[topicINDX]);
 	printf("user (id: %d) unsubscribed topic (id: %d)\n",id,topic_id);
 	return 0;
 	}
 	else
 	{
-	topics[topic_id].subscribers[ topics[topic_id].subCount ] = id;
-	topics[topic_id].subCount+=1;
+	topics[topicINDX].subscribers[ topics[topicINDX].subCount ] = id;
+	topics[topicINDX].subCount+=1;
 
-	updateTopicFile(topics[topic_id]);
+	updateTopicFile(topics[topicINDX]);
 	printf("user (id: %d) subscribed topic (id: %d)\n",id,topic_id);
 	return 1;
 	}
@@ -232,7 +248,7 @@ int addMessage(int cfd,struct User *users,struct Topic *topics,int userCount,int
 
   int sender_id=userIdByCfd(users,cfd,userCount);
 
-  while(buffer[j]!=';')
+  while(buffer[j]!='|')
   {
     buff[j]=buffer[j];
     j++;
@@ -241,11 +257,13 @@ int addMessage(int cfd,struct User *users,struct Topic *topics,int userCount,int
   msg.id=(*msgCount)+1;
   msg.topicId=atoi(buff);
   
-  if(isSubscriber(topics[msg.topicId],sender_id))
+  int topicINDX = topicIndxByID(topics,msg.topicId,topicCount);
+
+  if(isSubscriber(topics[topicINDX],sender_id))
   {
 	  memset(buff,0,64);
 	  j++;
-	  while(buffer[j]!=';')
+	  while(buffer[j]!='|')
 	  {
 	    buff[z]=buffer[j];
 	    j++;
@@ -258,7 +276,7 @@ int addMessage(int cfd,struct User *users,struct Topic *topics,int userCount,int
 	  
 	  for(int i=0;i<userCount;i++)
 	  {
-	    if(isSubscriber(topics[msg.topicId], users[i].id)&&users[i].id!=sender_id)
+	    if(isSubscriber(topics[topicINDX], users[i].id)&&users[i].id!=sender_id)
 		{
 		  msg.recipients[msg.toSend]=users[i].id;
 		  msg.toSend+=1;
@@ -303,8 +321,8 @@ int sendMsg(int cfd,struct User *users,struct Topic *topics,int userCount,int to
 	}
 	if(found)
 	{
-		snprintf(buffer,64,"%d",found);		// ILE_WIADOMOSCI;NAZWA_KOLEJKI;ID_KOLEJKI;TEMAT;WIADOMOSC
-		strcat(buffer,";");		
+		snprintf(buffer,64,"%d",found);		// ILE_WIADOMOSCI|NAZWA_KOLEJKI|ID_KOLEJKI|TEMAT|WIADOMOSC
+		strcat(buffer,"|");		
 		for(int i=0;i<topicCount;i++)
 		{
 			if(topics[i].id==msg.topicId)
@@ -314,13 +332,13 @@ int sendMsg(int cfd,struct User *users,struct Topic *topics,int userCount,int to
 			}
 		}
 		strcat(buffer,buff);
-		strcat(buffer,";");
+		strcat(buffer,"|");
 		memset(buff,0,64);
 		snprintf(buff,64,"%d",msg.topicId);	
 		strcat(buffer,buff);
-		strcat(buffer,";");
+		strcat(buffer,"|");
 		strcat(buffer,msg.title);
-		strcat(buffer,";");
+		strcat(buffer,"|");
 		strcat(buffer,msg.text);
 		write(cfd,buffer,strlen(buffer));
 		printf("sent message to user (id: %d)\n",recipient_id);
@@ -361,7 +379,7 @@ int sendMsg(int cfd,struct User *users,struct Topic *topics,int userCount,int to
 	}
 	else // nie znaleziono
 	{
-	  write(cfd,"0;",3);
+	  write(cfd,"0|",3);
 	  printf("sent empty message to user (id: %d)\n",recipient_id);
 
 	}

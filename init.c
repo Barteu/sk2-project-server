@@ -139,10 +139,10 @@ void createMsgFile(struct Message msg)
     user_id  
     */
     fprintf(fp,"%d\n",msg.id);
-    fprintf(fp,"%d\n;\n",msg.topicId);
-    fprintf(fp,"%s\n;\n",msg.title);
-    fprintf(fp,"%s\n;\n",msg.text);
-    fprintf(fp,"%d\n;\n",msg.toSend);
+    fprintf(fp,"%d\n|\n",msg.topicId);
+    fprintf(fp,"%s\n|\n",msg.title);
+    fprintf(fp,"%s\n|\n",msg.text);
+    fprintf(fp,"%d\n|\n",msg.toSend);
 
     for(int i=0;i<msg.toSend;i++)
     {
@@ -176,18 +176,18 @@ int scanMsg(struct Message *msg,int recipient_id,int indx)
 	    do
 	    {
 	      c=fgetc(fp);
-	    }while(c!=';');
+	    }while(c!='|');
 
 	    do
 	    {
 		c=fgetc(fp);
-		if(c!='\n'&&c!=';')
+		if(c!='\n'&&c!='|')
 		{
 		  buffer[l]=c;
 		  l++;
 		}
 		
-	    }while(c!=';');
+	    }while(c!='|');
 
 	    fgetc(fp);
 	    strncpy((*msg).title,buffer,strlen(buffer));
@@ -197,12 +197,12 @@ int scanMsg(struct Message *msg,int recipient_id,int indx)
 	    do
 	    {
 		c=fgetc(fp);
-		if(c!=';')
+		if(c!='|')
 		{
 		  buffer[l]=c;
 		  l++;
 		}
-	    }while(c!=';');
+	    }while(c!='|');
 
 	    strncpy((*msg).text,buffer,strlen(buffer)-1);
 	    fscanf(fp,"%d",&msg->toSend);
@@ -210,7 +210,7 @@ int scanMsg(struct Message *msg,int recipient_id,int indx)
 	    do
 	    {
 		c=fgetc(fp);
-	    }while(c!=';');
+	    }while(c!='|');
 
 	    for(int i=0;i<(*msg).toSend;i++)
 	    {
@@ -242,14 +242,14 @@ int scanMsg(struct Message *msg,int recipient_id,int indx)
 	    do
 	    {
 		c=fgetc(fp);
-	    }while(c!=';');
+	    }while(c!='|');
 
 	    do
 	    {
 		c=fgetc(fp);
 		buffer[l]=c;
 		l++;
-	    }while(c!=';');
+	    }while(c!='|');
 
 	    memset(buffer,0,1024);
 
@@ -259,14 +259,14 @@ int scanMsg(struct Message *msg,int recipient_id,int indx)
 		c=fgetc(fp);
 		buffer[l]=c;
 		l++;
-	    }while(c!=';');
+	    }while(c!='|');
 
 	    fscanf(fp,"%d",&l);
 	    int toSend=l;
 	    do
 	    {
 		c=fgetc(fp);
-	    }while(c!=';');
+	    }while(c!='|');
 
 	    for(int i=0;i<toSend;i++)
 	    {
