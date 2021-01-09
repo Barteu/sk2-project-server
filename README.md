@@ -3,6 +3,9 @@
    kompilacja skryptem: 
    
       ./skrypt.sh         
+      
+  uruchomienie:
+  ./server
 
 pliki:
 
