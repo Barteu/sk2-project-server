@@ -225,7 +225,7 @@ int scanMsg(struct Message *msg,int recipient_id,int indx)
 	    }
 	    if(found==0)
 	    {
-	     (*msg).id=-1;
+	          (*msg).id=-1;
 		  memset((*msg).recipients,0,sizeof (*msg).recipients);
 	       	  memset((*msg).title,0,64);
 	     	  memset((*msg).text,0,1024);

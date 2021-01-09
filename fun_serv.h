@@ -38,3 +38,14 @@ int sendMsg(int cfd,struct User *users,struct Topic *topics,int userCount,int to
 
 //zwaraca indeks tematu o danym id w tablicy tematow 
 int topicIndxByID(struct Topic *topics,int topic_id,int topicCount);
+
+//odbiera wiadomosc bez wzgledu na wielkosc bufforow posrednich
+int correctRead(int cfd, char *buffer,int size_count);
+
+//wysyla wiadomosc bez wzgledu na wielkosc bufforow posrednich
+void correctWrite(int cfd, char *buffer, int size_count);
+
+
+
+
+

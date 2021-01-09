@@ -141,7 +141,7 @@ void sendTopicList(int cfd,struct Topic *topics,int topicCount)
 	  strcat(buffer,bufferID);
 	  strcat(buffer,"|");
 	}
- 	write(cfd,buffer,strlen(buffer));
+ 	correctWrite(cfd,buffer,strlen(buffer));
 	printf("sent topic list to cfd: %d\n",cfd);
 }
 
@@ -149,7 +149,7 @@ void sendTopicList(int cfd,struct Topic *topics,int topicCount)
 
 void sendMyTopicList(int cfd,struct Topic *topics,int topicCount,struct User *users,int userCount)
 {
-	char buffer[2048]="\0";
+	char buffer[1024]="\0";
 	char bufferID[4]="\0";
 	int id = userIdByCfd(users,cfd,userCount);
  	for(int i=0;i<topicCount;i++)
@@ -165,12 +165,12 @@ void sendMyTopicList(int cfd,struct Topic *topics,int topicCount,struct User *us
 	}
 	if(strlen(buffer)>0)
 	{
-	  write(cfd,buffer,strlen(buffer));
+	  correctWrite(cfd,buffer,strlen(buffer));
 	  printf("sent subscription list to cfd: %d\n",cfd);
 	}
  	else
 	{
-	  write(cfd,"|",2);
+	  correctWrite(cfd,"|",2);
 	  printf("sent empty list to cfd: %d\n",cfd);
 	}
 }
@@ -283,11 +283,19 @@ int addMessage(int cfd,struct User *users,struct Topic *topics,int userCount,int
 		}
 	  }
 		
-        msgsIDs[*msgCount]=msg.id;
-        (*msgCount)+=1;
+        
 
-        createMsgFile(msg);
-	printf("user (id: %d) added new message\n",sender_id);
+	if( msg.toSend>0)
+	{	
+		msgsIDs[*msgCount]=msg.id;
+        	(*msgCount)+=1;
+		createMsgFile(msg);
+		printf("user (id: %d) added new message\n",sender_id);
+	}
+        else
+	{
+		printf("user (id: %d) tried to add message without recipients\n",sender_id);
+	}
 	return 1;
   }
   else
@@ -301,6 +309,10 @@ int sendMsg(int cfd,struct User *users,struct Topic *topics,int userCount,int to
 {
 	struct Message msg;
 	msg.id=-1;
+
+	memset(msg.recipients,0,sizeof msg.recipients);
+	memset(msg.title,0,64);
+	memset(msg.text,0,1024);
 
 	int recipient_id=userIdByCfd(users,cfd,userCount);
 
@@ -321,7 +333,7 @@ int sendMsg(int cfd,struct User *users,struct Topic *topics,int userCount,int to
 	}
 	if(found)
 	{
-		snprintf(buffer,64,"%d",found);		// ILE_WIADOMOSCI|NAZWA_KOLEJKI|ID_KOLEJKI|TEMAT|WIADOMOSC
+		snprintf(buffer,64,"%d",found);		// ILE_WIADOMOSCI|NAZWA_KOLEJKI|ID_KOLEJKI|TYTUŁ|WIADOMOSC
 		strcat(buffer,"|");		
 		for(int i=0;i<topicCount;i++)
 		{
@@ -340,7 +352,8 @@ int sendMsg(int cfd,struct User *users,struct Topic *topics,int userCount,int to
 		strcat(buffer,msg.title);
 		strcat(buffer,"|");
 		strcat(buffer,msg.text);
-		write(cfd,buffer,strlen(buffer));
+		
+		correctWrite(cfd,buffer,strlen(buffer));
 		printf("sent message to user (id: %d)\n",recipient_id);
 
 		if(msg.toSend>1)
@@ -379,14 +392,48 @@ int sendMsg(int cfd,struct User *users,struct Topic *topics,int userCount,int to
 	}
 	else // nie znaleziono
 	{
-	  write(cfd,"0|",3);
+	  correctWrite(cfd,"0|",3);
 	  printf("sent empty message to user (id: %d)\n",recipient_id);
 
 	}
 	
 	return found-1;
+}			
+
+
+
+int correctRead(int cfd, char *buffer,int size_count)
+{
+  int rc=0;
+  int counter=0;
+  do
+  {
+  rc = read(cfd,buffer+counter,size_count);
+  counter+=rc;
+  } while(buffer[counter-1]!='~');
+  buffer[counter-1]='\0';
+  
+  return counter-1;
 }
 
+void correctWrite(int cfd, char *buffer, int size_count)
+{
+  
+  char buffer2[1024]="\0";
+  strncpy(buffer2,buffer,size_count);
+  strcat(buffer2,"~");
+
+  int counter=0; 
+  int written=0;
+  int to_write=size_count+1;
+  
+  while(counter<to_write)
+  {
+  written = write(cfd,buffer2+written,to_write-written);
+  counter = counter + written;
+  }
+  memset(buffer2,0,1024);
+}
 
 
 
