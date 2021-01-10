@@ -5,23 +5,23 @@ int main(int argc, char** argv) {
 
   struct User users[1024];
   struct Topic topics[1024];
-  int msgsIDs[2048];
+  int msgsIDs[2048];  // identyfikatory wiadomosci
 
-  int userCount=0;
-  int topicCount=0;
-  int msgCount=0;
+  int userCount=0;  //liczba wczytanych kont uzytkownikow
+  int topicCount=0; // liczba tematow
+  int msgCount=0; // liczba wiadomosci oczekujacych na wyslanie
   
   initUsers(&userCount,users);
   initTopics(&topicCount,topics);
   initMsgs(&msgCount,msgsIDs);
-
+  
   socklen_t slt;
   int sfd, cfd, fdmax, fda, rc, i, on = 1;
   struct sockaddr_in saddr, caddr;
   static struct timeval timeout;
 
-  timeout.tv_sec = 300;
-  timeout.tv_usec = 0;
+  
+  
 
   fd_set rmask, wmask, rLoginMask,wOkLoginMask,wBadLoginMask,wAlreadyLoggedMask,rLoggedMask, wTopicsMask,wMyTopicsMask,wSubMask,wUnsubMask,wNewTopicOk,wNewTopicError,wMsgOkMask,wMsgErrorMask,wMsgRequestMask;
   // rLoginMask - maska do odczytu danych logowania
@@ -71,6 +71,9 @@ int main(int argc, char** argv) {
 
   while(1) {
     
+    timeout.tv_sec = 600;
+    timeout.tv_usec = 0;
+
     // skopiowanie cfd z masek pomocniczych do glownych(rmask,wmask)
     FD_SET(sfd, &rmask);
     for(i = sfd+1; i <= fdmax; i++)
@@ -109,7 +112,9 @@ int main(int argc, char** argv) {
 	    {
 		fda -= 1;
 		memset(buffer, 0, 1024);
-		rc2 = read(i,buffer,1024);
+
+		rc2 = correctRead(i,buffer,1024); 
+		
 		loginCorrect = checkLogin(users,buffer,rc2,userCount,i); 
 		if(loginCorrect==1) // zalogowano
 		{
@@ -137,8 +142,8 @@ int main(int argc, char** argv) {
 	   // wysylka info o dobrym/zlym zalogowaniu
 	   else if ( (FD_ISSET(i, &wmask))&&(FD_ISSET(i, &wOkLoginMask) ) )
 	   {
-		write(i,"Logged in", 10);
 		
+		correctWrite(i,"Logged in", 9);
 	        FD_SET(i,&rLoggedMask);
 		FD_CLR(i,&wOkLoginMask);
 		FD_CLR(i,&wmask);
@@ -147,7 +152,7 @@ int main(int argc, char** argv) {
 	   else if ( (FD_ISSET(i, &wmask))&&(FD_ISSET(i, &wBadLoginMask) ) )
 	   {
 		
-		write(i,"Incorrect login or password!", 28);
+		correctWrite(i,"Incorrect login or password!", 28);
 		
 	 	FD_SET(i,&rLoginMask);
 		FD_CLR(i,&wBadLoginMask);
@@ -155,7 +160,7 @@ int main(int argc, char** argv) {
 	   }
 	   else if ( (FD_ISSET(i, &wmask))&&(FD_ISSET(i, &wAlreadyLoggedMask) ) )
 	   {
-		write(i,"User is already logged in!", 27);
+		correctWrite(i,"User is already logged in!", 26);
 	 	FD_SET(i,&rLoginMask);
 		FD_CLR(i,&wAlreadyLoggedMask);
 		FD_CLR(i,&wmask);
@@ -169,11 +174,11 @@ int main(int argc, char** argv) {
 	   // 'n' - nowy temat
            // 'e' - wyslij wiadomosc
 	   // 'r' - odbierz wiadomosci
-	   else if ( (FD_ISSET(i, &rmask))&&(FD_ISSET(i, &rLoggedMask))  ) //&&(!FD_ISSET(i, &wmask))
+	   else if ( (FD_ISSET(i, &rmask))&&(FD_ISSET(i, &rLoggedMask))  ) 
 	   {
 		
 		memset(buffer, 0, 1024);
-		rc2 = read(i,buffer,1024);
+		rc2 = correctRead(i,buffer,1024);
 
 		if(buffer[0]=='t')
 		{
@@ -198,7 +203,7 @@ int main(int argc, char** argv) {
 		}
 		else if(buffer[0]=='s')
 		{
-			if(subUnsub(i,users,topics,userCount,buffer+2,topicCount))	//buffer: "s|TOPIC_ID"
+			if(subUnsub(i,users,topics,userCount,buffer+2,topicCount))	//buffer: "s|TOPIC_ID~"
 			{
 			FD_SET(i,&wSubMask);
 			}
@@ -220,7 +225,7 @@ int main(int argc, char** argv) {
 			}
 			FD_CLR(i,&rmask);
 		}
-		else if(buffer[0]=='e')	//buffer: "e|TOPIC_ID|TITLE|TEXT"
+		else if(buffer[0]=='e')	//buffer: "e|TOPIC_ID|TITLE|TEXT~"
 		{
 			if(addMessage(i,users,topics,userCount,topicCount,buffer+2,&msgCount,msgsIDs)) 
 			{
@@ -257,39 +262,39 @@ int main(int argc, char** argv) {
 	   // informacja Zasubskrybowano/Odsubskrybowano
 	   else if( (FD_ISSET(i, &wmask))&&(FD_ISSET(i, &wSubMask) )&&(FD_ISSET(i, &rLoggedMask) ) )
 	   {
-		write(i,"You subscribed to the topic", 28);
+		correctWrite(i,"You subscribed to the topic", 27);
 		FD_CLR(i,&wmask);
 		FD_CLR(i,&wSubMask);	
 	   }
 	   else if( (FD_ISSET(i, &wmask))&&(FD_ISSET(i, &wUnsubMask) )&&(FD_ISSET(i, &rLoggedMask) ) )
 	   {
-		write(i,"You unsubscribed to the topic", 30);
+		correctWrite(i,"You unsubscribed to the topic", 29);
 		FD_CLR(i,&wmask);
 		FD_CLR(i,&wUnsubMask);	
 	   }
 	   // dodano / niedodano nowy temat
 	   else if( (FD_ISSET(i, &wmask))&&(FD_ISSET(i, &wNewTopicOk) )&&(FD_ISSET(i, &rLoggedMask) ) )
 	   {
-		write(i,"Topic inserted", 15);
+		correctWrite(i,"Topic inserted", 14);
 		FD_CLR(i,&wmask);
 		FD_CLR(i,&wNewTopicOk);	
 	   }
 	   else if( (FD_ISSET(i, &wmask))&&(FD_ISSET(i, &wNewTopicError) )&&(FD_ISSET(i, &rLoggedMask) ) )
 	   {
-		write(i,"This topic alredy exists", 25);
+		correctWrite(i,"This topic alredy exists", 24);
 		FD_CLR(i,&wmask);
 		FD_CLR(i,&wNewTopicError);	
 	   }
 	   // wyslano/niewyslano wiadomosc
 	   else if( (FD_ISSET(i, &wmask))&&(FD_ISSET(i, &wMsgOkMask) )&&(FD_ISSET(i, &rLoggedMask) ) )
 	   {
-		write(i,"Message sent", 13);
+		correctWrite(i,"Message sent", 12);
 		FD_CLR(i,&wmask);
 		FD_CLR(i,&wMsgOkMask);	
 	   }
 	   else if( (FD_ISSET(i, &wmask))&&(FD_ISSET(i, &wMsgErrorMask) )&&(FD_ISSET(i, &rLoggedMask) ) )
 	   {
-		write(i,"Message not sent", 17);
+		correctWrite(i,"Message not sent", 16);
 		FD_CLR(i,&wmask);
 		FD_CLR(i,&wMsgErrorMask);	
 	   }

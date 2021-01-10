@@ -50,9 +50,7 @@ void initTopics(int *topicCount,struct Topic *topics)
 
 		while(fscanf(fp,"%d",&topics[*topicCount].subscribers[topics[*topicCount].subCount])>0)
 		{
-		  //printf(" %d,", topics[*topicCount].subscribers[topics[*topicCount].subCount]  ); 
 		  topics[*topicCount].subCount++;	
-		  
 		}
 		
 		(*topicCount)++;

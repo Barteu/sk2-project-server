@@ -324,12 +324,6 @@ int sendMsg(int cfd,struct User *users,struct Topic *topics,int userCount,int to
 	for(int j=0;j<msgCountCpy;j++)
 	{
 	        found+=scanMsg(&msg,recipient_id,msgsIDs[j]);		
-		//if(found==0)
-		//{
-		//  memset(msg.recipients,0,sizeof msg.recipients);
-	       //	  memset(msg.title,0,64);
-	     	//  memset(msg.text,0,1024);
-		//}	
 	}
 	if(found)
 	{
