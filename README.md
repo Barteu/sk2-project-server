@@ -1,10 +1,10 @@
 # sk2-project
 
- kompilacja skryptem: 
+Compile: 
    
       ./skrypt.sh         
       
-  uruchomienie:  
+  run:  
   
       ./server 
       
